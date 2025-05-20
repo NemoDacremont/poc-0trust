@@ -1,16 +1,22 @@
 import { createPrivateKey, createPublicKey, diffieHellman, KeyObject } from "crypto";
-import { HASH_NAME, PROLOGUE, PROTOCOL_NAME } from "./constants";
+import { HASH_NAME, PROLOGUE, PROTOCOL_NAME, TIMESTAMP_SIZE } from "./constants";
 import { KeyPair } from "./KeyPair"
 import { SPA } from "./SPA";
 import { SymmetricState } from "./SymmetricState"
 
 
 export interface HandshakeOptions {
+  ss: SymmetricState
   s: KeyPair;
   rs: Buffer;
   psk: Buffer;
 }
 
+export interface HandshakeHandleOptions {
+  data: Buffer;
+  s: KeyPair;
+  getSPKbyID: (id: Buffer) => Buffer;
+}
 
 function dh(privateKey: Buffer, publicKey: Buffer) {
     // Create a Diffie-Hellman key exchange object using X25519
@@ -38,13 +44,11 @@ export class Handshake {
   private rs: Buffer;
   private psk: Buffer;
 
-  constructor({ s, rs, psk }: HandshakeOptions) {
-    this.ss = new SymmetricState(PROTOCOL_NAME, HASH_NAME)
+  constructor({ ss, s, rs, psk }: HandshakeOptions) {
+    this.ss = ss
     this.s = s
     this.rs = rs
     this.psk = psk
-    this.ss.mixHash(Buffer.from(PROLOGUE, 'utf-8'))
-    this.ss.mixHash(this.rs)
   }
 
   prepare(message: Buffer): SPA {
@@ -64,6 +68,46 @@ export class Handshake {
     return new SPA(e.getPublic(), nv, nm)
   }
 
-  static handle({data, s, getSPKbyID}: HandshakeHandleOptions) {}
+  static handle({ data, s, getSPKbyID }: HandshakeHandleOptions): { handshake: Handshake, timestamp: Buffer, message: Buffer } {
+    const spa = SPA.unpack(data);
+
+    const ss = new SymmetricState(PROTOCOL_NAME, HASH_NAME);
+    ss.mixHash(Buffer.from(PROLOGUE, 'utf-8'));
+    ss.mixHash(s.getPublic());
+    
+    ss.mixHash(spa.getKey())
+    ss.mixKey(spa.getKey())
+    ss.mixKey(dh(s.getPrivate(), spa.getKey()))
+    
+    let decrypted
+    try {
+      decrypted = ss.decryptAndHash(spa.getValue())
+    } catch (error) {
+      throw new Error('Decryption of client data failed.')
+    }
+    
+    // Extract timestamp and rs from decrypted data
+    const timestamp = decrypted.subarray(0, TIMESTAMP_SIZE)
+    const rs = decrypted.subarray(TIMESTAMP_SIZE)
+    
+    const psk = getSPKbyID(rs)
+    if (psk === undefined) {
+      throw new Error(`Unknown client <${rs.toString('hex')}>`)
+    }
+    
+    ss.mixKey(dh(s.getPrivate(), rs))
+    ss.mixKeyAndHash(psk)
+    
+    let message
+    try {
+      message = ss.decryptAndHash(spa.getMessage())
+    } catch (error) {
+      throw new Error(`Wrong PSK for <${rs.toString('hex')}>`)
+    }
+    
+    const handshake = new Handshake({ ss, s, rs, psk });
+    
+    return { handshake, timestamp, message }
+  }
 }
 

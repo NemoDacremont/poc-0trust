@@ -7,10 +7,9 @@ export const MIN_NONCE = 0
 export const KEY_SIZE = 32
 export const PSK_SIZE = 32
 export const TAG_SIZE = 16
-export const NS_SIZE = KEY_SIZE + TAG_SIZE
 
 export const EMPTY_KEY = Buffer.alloc(KEY_SIZE)
 
 // Modified protocol
-export const TIMESTAMP_SIZE = 4
-export const NV_SIZE = TIMESTAMP_SIZE + KEY_SIZE + TAG_SIZE
+export const TIMESTAMP_SIZE = 8
+export const NV_SIZE = TIMESTAMP_SIZE + TAG_SIZE
