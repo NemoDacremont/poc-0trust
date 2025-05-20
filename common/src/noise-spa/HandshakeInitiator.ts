@@ -1,8 +1,8 @@
-import { createPrivateKey, createPublicKey, diffieHellman } from "crypto";
 import { HASH_NAME, PROLOGUE, PROTOCOL_NAME } from "./constants";
 import { KeyPair } from "./KeyPair";
 import { SPA } from "./SPA";
 import { SymmetricState } from "./SymmetricState";
+import { dh } from "./utils";
 
 export interface HandshakeInitiatorOptions {
   s: KeyPair;
@@ -16,20 +16,6 @@ function getTimestampBuffer(): Buffer {
 
   buffer.writeBigInt64LE(BigInt(timestamp));
   return buffer;
-}
-
-function dh(privateKey: Buffer, publicKey: Buffer) {
-  // Create a Diffie-Hellman key exchange object using X25519
-  const sharedSecret = diffieHellman({
-    privateKey: createPrivateKey({
-      key: privateKey,
-      format: "der",
-      type: "pkcs8",
-    }),
-    publicKey: createPublicKey({ key: publicKey, format: "der", type: "spki" }),
-  });
-
-  return sharedSecret;
 }
 
 export class HandshakeInitiator {
@@ -51,6 +37,10 @@ export class HandshakeInitiator {
 
   writeMessageA(payload: Buffer): SPA {
     const e = KeyPair.generate();
+
+    console.error(this.rs.length);
+    console.error(e.getPublic().length);
+    console.error(e.getPrivate().length);
 
     this.ss.mixHash(e.getPublic());
     this.ss.mixKey(e.getPublic());

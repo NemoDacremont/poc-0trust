@@ -1,4 +1,3 @@
-import { createPrivateKey, createPublicKey, diffieHellman } from "crypto";
 import {
   HASH_NAME,
   PROLOGUE,
@@ -8,23 +7,10 @@ import {
 import { KeyPair } from "./KeyPair";
 import { SPA } from "./SPA";
 import { SymmetricState } from "./SymmetricState";
+import { dh } from "./utils";
 
 export interface HandshakeResponderOptions {
   s: KeyPair;
-}
-
-function dh(privateKey: Buffer, publicKey: Buffer) {
-  // Create a Diffie-Hellman key exchange object using X25519
-  const sharedSecret = diffieHellman({
-    privateKey: createPrivateKey({
-      key: privateKey,
-      format: "der",
-      type: "pkcs8",
-    }),
-    publicKey: createPublicKey({ key: publicKey, format: "der", type: "spki" }),
-  });
-
-  return sharedSecret;
 }
 
 export class HandshakeResponder {
@@ -36,9 +22,9 @@ export class HandshakeResponder {
   private psk: Buffer | null;
 
   constructor({ s }: HandshakeResponderOptions) {
-    this.ss = null;
-
     this.s = s;
+
+    this.ss = null;
     this.rs = null;
     this.psk = null;
   }

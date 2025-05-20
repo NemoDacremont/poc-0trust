@@ -1,30 +1,31 @@
-import { createECDH, generateKeyPairSync, KeyObject } from "crypto";
+import { randomBytes } from "crypto";
+import { Key } from "./utils";
+import { x25519 } from "@noble/curves/ed25519";
+import { KEY_SIZE } from "./constants";
 
 export class KeyPair {
-  private public: Buffer;
-  private private: Buffer;
+  private public: Key;
+  private private: Key;
 
-  static generate(): KeyPair {
-    const { publicKey, privateKey } = generateKeyPairSync("x25519");
+  static generate(keySize = KEY_SIZE): KeyPair {
+    const privateKey = randomBytes(keySize);
+    return KeyPair.fromPrivate(privateKey);
+  }
+
+  static fromPrivate(privateKey: Key): KeyPair {
+    const publicKey = Buffer.from(x25519.getPublicKey(privateKey));
     return new KeyPair(publicKey, privateKey);
   }
 
-  static fromPrivate(sk: Buffer): KeyPair {
-    const { publicKey, privateKey } = generateKeyPairSync("x25519", {
-      privateKey: sk,
-    });
-    return new KeyPair(publicKey, privateKey);
+  constructor(publicKey: Key, privateKey: Key) {
+    this.public = publicKey;
+    this.private = privateKey;
   }
 
-  constructor(publicKey: KeyObject, privateKey: KeyObject) {
-    this.public = publicKey.export({ format: "der", type: "spki" });
-    this.private = privateKey.export({ format: "der", type: "pkcs8" });
-  }
-
-  getPublic(): Buffer {
+  getPublic(): Key {
     return this.public;
   }
-  getPrivate(): Buffer {
+  getPrivate(): Key {
     return this.private;
   }
 }

@@ -1,6 +1,6 @@
-import { Handshake } from "./noise-spa/Handshake";
 import { KeyPair } from "./noise-spa/KeyPair";
+import type { Key } from "./noise-spa/utils";
 
-export type {};
+export type { Key };
 
-export { Handshake, KeyPair };
+export { KeyPair };
