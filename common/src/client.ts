@@ -1,10 +1,27 @@
+import { createSocket } from "dgram";
+
 export class Client {
-    constructor() {
+    private host;
+    private port;
+
+    constructor(host: string, port: number) {
+        this.host = host;
+        this.port = port;
     }
 
     async send(message: Buffer): Promise<Buffer> {
-        return new Promise((res, _) => {
-            res(Buffer.alloc(0));
+        const socket = createSocket('udp4');
+
+        return new Promise((res, rej) => {
+            socket.on("message", (message, _rinfo) => {
+                res(message);
+                socket.close()
+            });
+
+            socket.send(message, this.port, this.host, (err) => {
+                if (err)
+                    rej(err);
+            });
         });
     }
 }
