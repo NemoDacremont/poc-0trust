@@ -1,27 +1,26 @@
 import { createSocket } from "dgram";
 
 export class Client {
-    private host;
-    private port;
+  private host;
+  private port;
 
-    constructor(host: string, port: number) {
-        this.host = host;
-        this.port = port;
-    }
+  constructor(host: string, port: number) {
+    this.host = host;
+    this.port = port;
+  }
 
-    async send(message: Buffer): Promise<Buffer> {
-        const socket = createSocket('udp4');
+  async send(message: Buffer): Promise<Buffer> {
+    const socket = createSocket("udp4");
 
-        return new Promise((res, rej) => {
-            socket.on("message", (message, _rinfo) => {
-                res(message);
-                socket.close()
-            });
+    return new Promise((res, rej) => {
+      socket.on("message", (message, _rinfo) => {
+        res(message);
+        socket.close();
+      });
 
-            socket.send(message, this.port, this.host, (err) => {
-                if (err)
-                    rej(err);
-            });
-        });
-    }
+      socket.send(message, this.port, this.host, (err) => {
+        if (err) rej(err);
+      });
+    });
+  }
 }

@@ -1,6 +1,5 @@
 import { KEY_SIZE, NV_SIZE } from "./constants";
 
-
 export class SPA {
   static MIN_SIZE = KEY_SIZE + NV_SIZE;
 
@@ -19,12 +18,13 @@ export class SPA {
   }
 
   static unpack(data: Buffer) {
-    if (data.length < SPA.MIN_SIZE) throw new Error('Data too small');
+    if (data.length < SPA.MIN_SIZE) throw new Error("Data too small");
+
     return new SPA(
       data.subarray(0, KEY_SIZE),
       data.subarray(KEY_SIZE, KEY_SIZE + NV_SIZE),
-      data.subarray(KEY_SIZE + NV_SIZE)
-    )
+      data.subarray(KEY_SIZE + NV_SIZE),
+    );
   }
 
   getKey(): Buffer {
@@ -36,7 +36,7 @@ export class SPA {
     return this.nv;
   }
 
-  getMessage(): Buffer {
+  getCiphertext(): Buffer {
     return this.nm;
   }
 }
