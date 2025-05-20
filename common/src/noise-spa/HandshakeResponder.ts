@@ -44,7 +44,7 @@ export class HandshakeResponder {
   private rs: Buffer | null;
   private psk: Buffer | null;
 
-  private constructor({ s }: HandshakeOptions) {
+  constructor({ s }: HandshakeOptions) {
     this.ss = null;
 
     this.s = s;

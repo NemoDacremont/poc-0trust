@@ -45,7 +45,7 @@ export class HandshakeInitiator {
   private rs: Buffer;
   private psk: Buffer;
 
-  private constructor({ s, rs, psk }: HandshakeOptions) {
+  constructor({ s, rs, psk }: HandshakeOptions) {
     this.ss = new SymmetricState(PROTOCOL_NAME, HASH_NAME);
 
     this.s = s;
