@@ -1,19 +1,20 @@
 import { createCipheriv, createDecipheriv } from "crypto";
 import { EMPTY_KEY, MIN_NONCE, TAG_SIZE } from "./constants";
+import { Key } from "./utils";
 
-export function createCipher(key: Buffer, nonce: Buffer) {
+export function createCipher(key: Key, nonce: Key) {
   return createCipheriv("chacha20-poly1305", key, nonce);
 }
 
-export function createDecipher(key: Buffer, nonce: Buffer) {
+export function createDecipher(key: Key, nonce: Key) {
   return createDecipheriv("chacha20-poly1305", key, nonce);
 }
 
 export class CipherState {
-  private key: Buffer;
+  private key: Key;
   private nonce: number;
 
-  constructor(k: Buffer) {
+  constructor(k: Key) {
     this.key = k;
     this.nonce = MIN_NONCE;
   }

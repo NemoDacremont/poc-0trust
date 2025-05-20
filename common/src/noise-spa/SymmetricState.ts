@@ -1,6 +1,7 @@
 import { createHash, hkdfSync } from "crypto";
 import { KEY_SIZE } from "./constants";
 import { CipherState } from "./CipherState";
+import { Key } from "./utils";
 
 export type ProtocolNameType =
   | "Noise_IKpsk1_25519_ChaChaPoly_BLAKE2s"
@@ -43,7 +44,7 @@ export class SymmetricState {
     this.h = this.hash(this.h, data);
   }
 
-  mixKey(ikm: Buffer) {
+  mixKey(ikm: Key) {
     const derived = this.hkdf(ikm, this.ck, KEY_SIZE * 2);
 
     this.ck = derived.subarray(0, KEY_SIZE);
@@ -52,7 +53,7 @@ export class SymmetricState {
     this.cs = new CipherState(newKey);
   }
 
-  mixKeyAndHash(ikm: Buffer) {
+  mixKeyAndHash(ikm: Key) {
     const derived = this.hkdf(ikm, this.ck, KEY_SIZE * 3);
     this.ck = derived.subarray(0, KEY_SIZE);
 

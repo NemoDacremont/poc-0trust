@@ -4,13 +4,14 @@ import {
   HandshakeInitiatorOptions,
 } from "./noise-spa/HandshakeInitiator";
 import { KeyPair } from "./noise-spa/KeyPair";
+import { Key } from "./noise-spa/utils";
 
 export class Client {
   private host;
   private port;
   private s: KeyPair;
-  private rs: Buffer;
-  private psk: Buffer;
+  private rs: Key;
+  private psk: Key;
 
   constructor(
     host: string,

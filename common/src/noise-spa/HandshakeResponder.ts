@@ -7,7 +7,7 @@ import {
 import { KeyPair } from "./KeyPair";
 import { SPA } from "./SPA";
 import { SymmetricState } from "./SymmetricState";
-import { dh } from "./utils";
+import { dh, Key } from "./utils";
 
 export interface HandshakeResponderOptions {
   s: KeyPair;
@@ -18,8 +18,8 @@ export class HandshakeResponder {
 
   // Can be null if the commands aren't used in the right order
   private ss: SymmetricState | null;
-  private rs: Buffer | null;
-  private psk: Buffer | null;
+  private rs: Key | null;
+  private psk: Key | null;
 
   constructor({ s }: HandshakeResponderOptions) {
     this.s = s;
@@ -31,7 +31,7 @@ export class HandshakeResponder {
 
   readMessageA(
     messageA: Buffer,
-    getPSKByID: (rs: Buffer) => Buffer | null,
+    getPSKByID: (rs: Key) => Key | null,
   ): { timestamp: Buffer; plaintext: Buffer } {
     const spa = SPA.unpack(messageA);
 

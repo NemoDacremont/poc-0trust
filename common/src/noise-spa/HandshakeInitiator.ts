@@ -2,12 +2,12 @@ import { HASH_NAME, PROLOGUE, PROTOCOL_NAME } from "./constants";
 import { KeyPair } from "./KeyPair";
 import { SPA } from "./SPA";
 import { SymmetricState } from "./SymmetricState";
-import { dh } from "./utils";
+import { dh, Key } from "./utils";
 
 export interface HandshakeInitiatorOptions {
   s: KeyPair;
-  rs: Buffer;
-  psk: Buffer;
+  rs: Key;
+  psk: Key;
 }
 
 function getTimestampBuffer(): Buffer {
@@ -21,8 +21,8 @@ function getTimestampBuffer(): Buffer {
 export class HandshakeInitiator {
   private ss: SymmetricState;
   private s: KeyPair;
-  private rs: Buffer;
-  private psk: Buffer;
+  private rs: Key;
+  private psk: Key;
 
   constructor({ s, rs, psk }: HandshakeInitiatorOptions) {
     this.ss = new SymmetricState(PROTOCOL_NAME, HASH_NAME);

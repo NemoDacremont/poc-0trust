@@ -1,13 +1,14 @@
 import { KEY_SIZE, NV_SIZE } from "./constants";
+import { Key } from "./utils";
 
 export class SPA {
   static MIN_SIZE = KEY_SIZE + NV_SIZE;
 
-  private e: Buffer; // Public ephemeral key
+  private e: Key; // Public ephemeral key
   private nv: Buffer;
   private nm: Buffer;
 
-  constructor(e: Buffer, nv: Buffer, nm: Buffer) {
+  constructor(e: Key, nv: Buffer, nm: Buffer) {
     this.e = e;
     this.nv = nv;
     this.nm = nm;
@@ -17,7 +18,7 @@ export class SPA {
     return Buffer.concat([this.e, this.nv, this.nm]);
   }
 
-  static unpack(data: Buffer) {
+  static unpack(data: Buffer): SPA {
     if (data.length < SPA.MIN_SIZE) throw new Error("Data too small");
 
     return new SPA(
@@ -27,7 +28,7 @@ export class SPA {
     );
   }
 
-  getKey(): Buffer {
+  getKey(): Key {
     return this.e;
   }
 
