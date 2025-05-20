@@ -3,7 +3,7 @@ import { KEY_SIZE, NV_SIZE } from "./constants";
 export class SPA {
   static MIN_SIZE = KEY_SIZE + NV_SIZE;
 
-  private e: Buffer;
+  private e: Buffer; // Public ephemeral key
   private nv: Buffer;
   private nm: Buffer;
 
