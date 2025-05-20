@@ -1,0 +1,8 @@
+[server]
+public_key = "d922a623f61caadbd44f716dcd9f59423c791f50e016eb9cfed28509b334f80b"
+host = "127.0.0.1"
+port = 55555
+
+[client]
+private_key = "5db979a88bc2a2203df03acf4dd946b89fdb9293242a557778c69b7f29382e76"
+psk = "9775b0f777581be4c9922c7b001ec9ce01f044216b4a30d63b5a5b411300c68b"
