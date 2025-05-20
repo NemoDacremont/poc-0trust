@@ -1,4 +1,4 @@
-import { generateKeyPairSync, KeyObject } from "crypto";
+import { createECDH, generateKeyPairSync, KeyObject } from "crypto";
 
 export class KeyPair {
   private public: Buffer;
@@ -6,6 +6,13 @@ export class KeyPair {
 
   static generate(): KeyPair {
     const { publicKey, privateKey } = generateKeyPairSync("x25519");
+    return new KeyPair(publicKey, privateKey);
+  }
+
+  static fromPrivate(sk: Buffer): KeyPair {
+    const { publicKey, privateKey } = generateKeyPairSync("x25519", {
+      privateKey: sk,
+    });
     return new KeyPair(publicKey, privateKey);
   }
 
