@@ -84,5 +84,7 @@ export class HandshakeResponder {
     return { timestamp, plaintext };
   }
 
-  writeMessageB() {}
+  writeMessageB(plaintext: Buffer): Buffer {
+    return Buffer.from("gitgud");
+  }
 }
