@@ -22,14 +22,6 @@ export interface HandshakeHandleOptions {
   getSPKbyID: (id: Buffer) => Buffer;
 }
 
-function getTimestampBuffer(): Buffer {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const buffer = Buffer.alloc(8);
-
-  buffer.writeBigInt64LE(BigInt(timestamp));
-  return buffer;
-}
-
 function dh(privateKey: Buffer, publicKey: Buffer) {
   // Create a Diffie-Hellman key exchange object using X25519
   const sharedSecret = diffieHellman({
@@ -44,7 +36,7 @@ function dh(privateKey: Buffer, publicKey: Buffer) {
   return sharedSecret;
 }
 
-export class HandshakeInitiator {
+export class HandshakeResponder {
   private s: KeyPair;
 
   // Can be null if the commands aren't used in the right order
