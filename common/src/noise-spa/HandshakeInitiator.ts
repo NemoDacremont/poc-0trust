@@ -4,17 +4,10 @@ import { KeyPair } from "./KeyPair";
 import { SPA } from "./SPA";
 import { SymmetricState } from "./SymmetricState";
 
-export interface HandshakeOptions {
-  ss: SymmetricState;
+export interface HandshakeInitiatorOptions {
   s: KeyPair;
   rs: Buffer;
   psk: Buffer;
-}
-
-export interface HandshakeHandleOptions {
-  data: Buffer;
-  s: KeyPair;
-  getSPKbyID: (id: Buffer) => Buffer;
 }
 
 function getTimestampBuffer(): Buffer {

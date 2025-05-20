@@ -9,17 +9,8 @@ import { KeyPair } from "./KeyPair";
 import { SPA } from "./SPA";
 import { SymmetricState } from "./SymmetricState";
 
-export interface HandshakeOptions {
-  ss: SymmetricState;
+export interface HandshakeResponderOptions {
   s: KeyPair;
-  rs: Buffer;
-  psk: Buffer;
-}
-
-export interface HandshakeHandleOptions {
-  data: Buffer;
-  s: KeyPair;
-  getSPKbyID: (id: Buffer) => Buffer;
 }
 
 function dh(privateKey: Buffer, publicKey: Buffer) {
@@ -44,7 +35,7 @@ export class HandshakeResponder {
   private rs: Buffer | null;
   private psk: Buffer | null;
 
-  constructor({ s }: HandshakeOptions) {
+  constructor({ s }: HandshakeResponderOptions) {
     this.ss = null;
 
     this.s = s;
