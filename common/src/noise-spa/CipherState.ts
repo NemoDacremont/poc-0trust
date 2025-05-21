@@ -1,20 +1,26 @@
 import { createCipheriv, createDecipheriv } from "crypto";
-import { EMPTY_KEY, MIN_NONCE, TAG_SIZE } from "./constants";
+import { EMPTY_KEY, KEY_SIZE, MIN_NONCE, TAG_SIZE } from "./constants";
 import { Key } from "./utils";
-
-export function createCipher(key: Key, nonce: Key) {
-  return createCipheriv("chacha20-poly1305", key, nonce);
-}
-
-export function createDecipher(key: Key, nonce: Key) {
-  return createDecipheriv("chacha20-poly1305", key, nonce);
-}
+import assert from "assert";
+import { InvalidKeySizeError } from "./exceptions/InvalidKeySizeError";
 
 export class CipherState {
   private key: Key;
   private nonce: number;
 
+  private static createCipher(key: Key, nonce: Key) {
+    return createCipheriv("chacha20-poly1305", key, nonce);
+  }
+
+  private static createDecipher(key: Key, nonce: Key) {
+    return createDecipheriv("chacha20-poly1305", key, nonce);
+  }
+
   constructor(k: Key) {
+    assert(
+      k.byteLength == KEY_SIZE,
+      new InvalidKeySizeError(KEY_SIZE, k.byteLength),
+    );
     this.key = k;
     this.nonce = MIN_NONCE;
   }
@@ -27,8 +33,8 @@ export class CipherState {
     const nonce = Buffer.alloc(12);
     nonce.writeBigUInt64LE(BigInt(this.nonce), 4);
 
-    const cipher = createCipher(this.key, nonce);
-    cipher.setAAD(ad, { plaintextLength: Buffer.byteLength(plaintext) });
+    const cipher = CipherState.createCipher(this.key, nonce);
+    cipher.setAAD(ad, { plaintextLength: plaintext.byteLength });
 
     const ciphertext = Buffer.concat([
       cipher.update(plaintext),
@@ -43,17 +49,20 @@ export class CipherState {
   decrypt(ad: Buffer, ciphertext: Buffer): Buffer {
     const nonce = Buffer.alloc(12);
     nonce.writeBigUInt64LE(BigInt(this.nonce), 4);
-    const cipher = createDecipher(this.key, nonce);
+    const cipher = CipherState.createDecipher(this.key, nonce);
 
-    const encrypted = ciphertext.subarray(0, -TAG_SIZE);
+    const realCiphertext = ciphertext.subarray(0, -TAG_SIZE);
     const tag = ciphertext.subarray(-TAG_SIZE);
 
     cipher.setAuthTag(tag);
-    cipher.setAAD(ad, { plaintextLength: Buffer.byteLength(encrypted) });
+    cipher.setAAD(ad, { plaintextLength: realCiphertext.byteLength });
 
-    const decrypted = Buffer.concat([cipher.update(encrypted), cipher.final()]);
+    const plaintext = Buffer.concat([
+      cipher.update(realCiphertext),
+      cipher.final(),
+    ]);
 
     this.nonce++;
-    return decrypted;
+    return plaintext;
   }
 }
