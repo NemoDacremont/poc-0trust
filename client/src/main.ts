@@ -1,7 +1,5 @@
 import { createInterface } from "readline/promises";
-import { Client } from "../../common/src/client";
-import { HandshakeInitiatorOptions } from "../../common/src/noise-spa/HandshakeInitiator";
-import { KeyPair } from "../../common/src";
+import { KeyPair, Client, HandshakeInitiatorOptions } from "../../common/src";
 
 const rl = createInterface({
   input: process.stdin,

@@ -1,5 +1,4 @@
-import { Key, KeyPair } from "../../common/src";
-import { Server } from "../../common/src/server";
+import { Key, KeyPair, Server } from "../../common/src";
 
 const s = KeyPair.fromPrivate(
   Buffer.from(
