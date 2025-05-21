@@ -5,30 +5,30 @@ import { InvalidDataSizeError } from "../src/noise-spa/exceptions/InvalidDataSiz
 import { InvalidNVSizeError } from "../src/noise-spa/exceptions/InvalidNVSizeError";
 import { InvalidKeySizeError } from "../src/noise-spa/exceptions/InvalidKeySizeError";
 
-const e = Buffer.from(
-  "deadbeefcafe0123456789deadbeefcafe0123456789deadbeefcafe01234567",
-  "hex",
-);
-const nv = Buffer.from(
-  "cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beef",
-  "hex",
-);
-const nm = Buffer.from(
-  "376831735f31355f346e5f4e635259703733445f6d3335733467335f286e6f29",
-  "hex",
-);
-
-// concatenation of e, nv and nm
-const message2unpack = Buffer.from(
-  "deadbeefcafe0123456789deadbeefcafe0123456789deadbeefcafe01234567cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beef376831735f31355f346e5f4e635259703733445f6d3335733467335f286e6f29",
-  "hex",
-);
-
-// This makes the max message length to be 4096
-const MAX_RANDNM_LENGTH = 4096 - NV_SIZE - KEY_SIZE;
-
 describe("SPA unit tests", () => {
-  it("should return the right ephemeral key", () => {
+  const e = Buffer.from(
+    "deadbeefcafe0123456789deadbeefcafe0123456789deadbeefcafe01234567",
+    "hex",
+  );
+  const nv = Buffer.from(
+    "cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beef",
+    "hex",
+  );
+  const nm = Buffer.from(
+    "376831735f31355f346e5f4e635259703733445f6d3335733467335f286e6f29",
+    "hex",
+  );
+
+  // concatenation of e, nv and nm
+  const message2unpack = Buffer.from(
+    "deadbeefcafe0123456789deadbeefcafe0123456789deadbeefcafe01234567cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beefdead4567cafe0123beef376831735f31355f346e5f4e635259703733445f6d3335733467335f286e6f29",
+    "hex",
+  );
+
+  // This makes the max message length to be 4096
+  const MAX_RANDNM_LENGTH = 4096 - NV_SIZE - KEY_SIZE;
+
+  it("constructs with a valid key", () => {
     const spa = new SPA(e, nv, nm);
 
     expect(spa.getKey()).toStrictEqual(e);
@@ -112,9 +112,7 @@ describe("SPA unit tests", () => {
     }
   });
 
-  // Exceptions
-
-  it("should throw an error if the key is not the correct size", () => {
+  it("throws an error if the key is not of the correct size", () => {
     for (let keySize = 0; keySize < KEY_SIZE; ++keySize) {
       const invalidKey = Buffer.alloc(keySize);
 
@@ -124,9 +122,9 @@ describe("SPA unit tests", () => {
     }
   });
 
-  it("should throw an error if nv is not the correct size", () => {
+  it("throws an error if nv is not of the correct size", () => {
     for (let nvSize = 0; nvSize < NV_SIZE; ++nvSize) {
-      const invalidNv = Buffer.alloc(nvSize); // Invalid nv size
+      const invalidNv = Buffer.alloc(nvSize);
 
       expect(() => new SPA(e, invalidNv, nm)).toThrow(
         new InvalidNVSizeError(NV_SIZE, nvSize),
@@ -134,7 +132,18 @@ describe("SPA unit tests", () => {
     }
   });
 
-  it("should throw an error if data is too small", () => {
+  it("throws an error if nv and key are not of the correct size", () => {
+    for (let keySize = 0; keySize < KEY_SIZE; ++keySize) {
+      for (let nvSize = 0; nvSize < NV_SIZE; ++nvSize) {
+        const invalidKey = Buffer.alloc(keySize);
+        const invalidNv = Buffer.alloc(nvSize);
+
+        expect(() => new SPA(invalidKey, invalidNv, nm)).toThrow();
+      }
+    }
+  });
+
+  it("throws an error if data is too small", () => {
     for (let dataSize = 0; dataSize < SPA.MIN_SIZE; ++dataSize) {
       const smallBuffer = Buffer.alloc(dataSize);
 
