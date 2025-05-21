@@ -63,7 +63,7 @@ describe("IKpsk1 Message A", () => {
     const { timestamp, plaintext } = bobHS.readMessageA(msg, getPSKbyID);
 
     // expect(ok).toBe(true);
-    expect(plaintext).toEqual(payload);
+    expect(plaintext).toStrictEqual(payload);
   });
 
   test("Sender authentication and KCI resistance", () => {
