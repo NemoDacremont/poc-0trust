@@ -109,10 +109,35 @@ describe("SPA unit tests", () => {
     }
   });
 
+  // Exceptions
+
+  it("should throw an error if the key is not the correct size", () => {
+    for (let keySize = 0; keySize < KEY_SIZE; ++keySize) {
+      const invalidKey = Buffer.alloc(keySize);
+
+      expect(() => new SPA(invalidKey, nv, nm)).toThrow(
+        `e should be exactly ${KEY_SIZE} bytes long, got ${keySize} bytes long`,
+      );
+    }
+  });
+
+  it("should throw an error if nv is not the correct size", () => {
+    for (let nvSize = 0; nvSize < NV_SIZE; ++nvSize) {
+      const invalidNv = Buffer.alloc(nvSize); // Invalid nv size
+
+      expect(() => new SPA(e, invalidNv, nm)).toThrow(
+        `nv should be exactly ${NV_SIZE} bytes long, got ${nvSize} bytes long`,
+      );
+    }
+  });
+
   it("should throw an error if data is too small", () => {
-    for (let i = 0; i < SPA.MIN_SIZE; ++i) {
-      const smallBuffer = randomBytes(SPA.MIN_SIZE - i - 1);
-      expect(() => SPA.unpack(smallBuffer)).toThrow("Data too small");
+    for (let dataSize = 0; dataSize < SPA.MIN_SIZE; ++dataSize) {
+      const smallBuffer = Buffer.alloc(dataSize);
+
+      expect(() => SPA.unpack(smallBuffer)).toThrow(
+        `data should be at least ${SPA.MIN_SIZE} bytes long, got ${dataSize} bytes long`,
+      );
     }
   });
 });
