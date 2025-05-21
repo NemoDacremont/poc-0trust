@@ -1,6 +1,9 @@
 import { randomBytes, randomInt } from "crypto";
 import { KEY_SIZE, NV_SIZE } from "../src/noise-spa/constants";
 import { SPA } from "../src/noise-spa/SPA";
+import { InvalidDataSizeError } from "../src/noise-spa/exceptions/InvalidDataSizeError";
+import { InvalidNVSizeError } from "../src/noise-spa/exceptions/InvalidNVSizeError";
+import { InvalidKeySizeError } from "../src/noise-spa/exceptions/InvalidKeySizeError";
 
 const e = Buffer.from(
   "deadbeefcafe0123456789deadbeefcafe0123456789deadbeefcafe01234567",
@@ -116,7 +119,7 @@ describe("SPA unit tests", () => {
       const invalidKey = Buffer.alloc(keySize);
 
       expect(() => new SPA(invalidKey, nv, nm)).toThrow(
-        `e should be exactly ${KEY_SIZE} bytes long, got ${keySize} bytes long`,
+        new InvalidKeySizeError(KEY_SIZE, keySize),
       );
     }
   });
@@ -126,7 +129,7 @@ describe("SPA unit tests", () => {
       const invalidNv = Buffer.alloc(nvSize); // Invalid nv size
 
       expect(() => new SPA(e, invalidNv, nm)).toThrow(
-        `nv should be exactly ${NV_SIZE} bytes long, got ${nvSize} bytes long`,
+        new InvalidNVSizeError(NV_SIZE, nvSize),
       );
     }
   });
@@ -136,7 +139,7 @@ describe("SPA unit tests", () => {
       const smallBuffer = Buffer.alloc(dataSize);
 
       expect(() => SPA.unpack(smallBuffer)).toThrow(
-        `data should be at least ${SPA.MIN_SIZE} bytes long, got ${dataSize} bytes long`,
+        new InvalidDataSizeError(SPA.MIN_SIZE, dataSize),
       );
     }
   });
