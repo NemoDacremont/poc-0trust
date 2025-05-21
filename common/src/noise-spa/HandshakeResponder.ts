@@ -1,3 +1,4 @@
+import assert from "assert";
 import {
   HASH_NAME,
   PROLOGUE,
@@ -20,6 +21,8 @@ export class HandshakeResponder {
   private ss: SymmetricState | null;
   private rs: Key | null;
   private psk: Key | null;
+  private e: KeyPair | null;
+  private re: Key | null;
 
   constructor({ s }: HandshakeResponderOptions) {
     this.s = s;
@@ -27,6 +30,8 @@ export class HandshakeResponder {
     this.ss = null;
     this.rs = null;
     this.psk = null;
+    this.e = null;
+    this.re = null;
   }
 
   readMessageA(
@@ -42,8 +47,9 @@ export class HandshakeResponder {
 
     // TODO: Validate public key
 
-    this.ss.mixHash(spa.getKey());
-    this.ss.mixKey(spa.getKey());
+    this.re = spa.getKey();
+    this.ss.mixHash(this.re);
+    this.ss.mixKey(this.re);
     this.ss.mixKey(dh(this.s.getPrivate(), spa.getKey()));
 
     let decrypted;
@@ -71,6 +77,26 @@ export class HandshakeResponder {
   }
 
   writeMessageB(plaintext: Buffer): Buffer {
-    return Buffer.from("gitgud");
+    assert(
+      this.ss !== null,
+      "readMessageA should be called before writeMessageB",
+    );
+    assert(
+      this.re !== null,
+      "readMessageA should be called before writeMessageB",
+    );
+    assert(
+      this.rs !== null,
+      "readMessageA should be called before writeMessageB",
+    );
+    this.e = KeyPair.generate();
+
+    this.ss.mixHash(this.e.getPublic());
+    this.ss.mixKey(this.e.getPublic());
+    this.ss.mixKey(dh(this.e.getPrivate(), this.re));
+    this.ss.mixKey(dh(this.e.getPrivate(), this.rs));
+
+    const ciphertext = this.ss.encryptAndHash(plaintext);
+    return ciphertext;
   }
 }
