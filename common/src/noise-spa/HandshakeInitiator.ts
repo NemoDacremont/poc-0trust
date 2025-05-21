@@ -58,7 +58,7 @@ export class HandshakeInitiator {
     return new SPA(this.e.getPublic(), nv, nm);
   }
 
-  readMessageB(messageB: Buffer, getPSKByID: (rs: Key) => Key | null): Buffer {
+  readMessageB(messageB: Buffer): Buffer {
     assert(
       this.ss !== null,
       "readMessageA should have initialized the SymmetricState.",
@@ -69,7 +69,6 @@ export class HandshakeInitiator {
     );
 
     const spa = SPA.unpack(messageB);
-
     this.re = spa.getKey();
 
     this.ss.mixHash(this.re);
@@ -78,14 +77,7 @@ export class HandshakeInitiator {
     this.ss.mixKey(dh(this.e.getPrivate(), this.re));
     this.ss.mixKey(dh(this.s.getPrivate(), this.re));
 
-    let decrypted;
-    try {
-      // valid 2...
-      decrypted = this.ss.decryptAndHash(spa.getCiphertext());
-    } catch (error) {
-      throw new Error("Decryption of server data failed.");
-    }
-
-    return decrypted;
+    const plaintext = this.ss.decryptAndHash(spa.getCiphertext());
+    return plaintext;
   }
 }

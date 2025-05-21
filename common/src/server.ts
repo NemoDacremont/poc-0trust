@@ -48,9 +48,9 @@ export class Server extends EventEmitter<ServerEvents> {
     // Let the user use plaintext to create msg
     this.emit("message", plaintext, {
       send: (msg: string) => {
-        const cipher = hs.writeMessageB(Buffer.from(msg));
+        const spa = hs.writeMessageB(Buffer.from(msg));
 
-        client.send(cipher, rinfo.port, rinfo.address);
+        client.send(spa.pack(), rinfo.port, rinfo.address);
       },
     });
   }

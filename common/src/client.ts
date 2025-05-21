@@ -37,7 +37,9 @@ export class Client {
 
     return new Promise((res, rej) => {
       socket.on("message", (message, _rinfo) => {
-        res(message);
+        const plaintext = hs.readMessageB(message);
+
+        res(plaintext);
         socket.close();
       });
 

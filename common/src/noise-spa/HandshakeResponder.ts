@@ -1,6 +1,7 @@
 import assert from "assert";
 import {
   HASH_NAME,
+  NV_SIZE,
   PROLOGUE,
   PROTOCOL_NAME,
   TIMESTAMP_SIZE,
@@ -76,7 +77,7 @@ export class HandshakeResponder {
     return { timestamp, plaintext };
   }
 
-  writeMessageB(plaintext: Buffer): Buffer {
+  writeMessageB(plaintext: Buffer): SPA {
     assert(
       this.ss !== null,
       "readMessageA should be called before writeMessageB",
@@ -93,10 +94,13 @@ export class HandshakeResponder {
 
     this.ss.mixHash(this.e.getPublic());
     this.ss.mixKey(this.e.getPublic());
+
     this.ss.mixKey(dh(this.e.getPrivate(), this.re));
     this.ss.mixKey(dh(this.e.getPrivate(), this.rs));
 
-    const ciphertext = this.ss.encryptAndHash(plaintext);
-    return ciphertext;
+    const nm = this.ss.encryptAndHash(plaintext);
+
+    const spa = new SPA(this.e.getPublic(), Buffer.alloc(NV_SIZE), nm);
+    return spa;
   }
 }
