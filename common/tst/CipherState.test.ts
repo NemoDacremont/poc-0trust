@@ -11,74 +11,80 @@ describe("CipherState", () => {
   const TEST_PLAINTEXT = Buffer.from("hello world");
   const TEST_EMPTY_KEY = Buffer.alloc(KEY_SIZE, 0x00);
 
-  it("constructs with a valid key", () => {
-    expect(() => new CipherState(TEST_KEY)).not.toThrow();
+  describe("constructor", () => {
+    it("constructs with a valid key", () => {
+      expect(() => new CipherState(TEST_KEY)).not.toThrow();
+    });
+
+    it("throws InvalidKeySizeError with an invalid key", () => {
+      for (let keySize = 0; keySize < KEY_SIZE; ++keySize) {
+        const invalidKey = randomBytes(keySize);
+        expect(() => new CipherState(invalidKey)).toThrow(
+          new InvalidKeySizeError(KEY_SIZE, keySize),
+        );
+      }
+    });
   });
 
-  it("throws InvalidKeySizeError with an invalid key", () => {
-    for (let keySize = 0; keySize < KEY_SIZE; ++keySize) {
-      const invalidKey = randomBytes(keySize);
-      expect(() => new CipherState(invalidKey)).toThrow(
-        new InvalidKeySizeError(KEY_SIZE, keySize),
+  describe("hasKey", () => {
+    it("hasKey() returns false for empty key", () => {
+      const cs = new CipherState(TEST_EMPTY_KEY);
+      expect(cs.hasKey()).toStrictEqual(false);
+    });
+
+    it("hasKey() returns true for non-empty key", () => {
+      const cs = new CipherState(TEST_KEY);
+      expect(cs.hasKey()).toStrictEqual(true);
+    });
+  });
+
+  describe("Encrypt and Decrypt", () => {
+    it("encrypts and decrypts correctly with AAD", () => {
+      const cs = new CipherState(TEST_KEY);
+
+      const ciphertext = cs.encrypt(TEST_AD, TEST_PLAINTEXT);
+      expect(ciphertext.byteLength).toStrictEqual(
+        TEST_PLAINTEXT.byteLength + TAG_SIZE,
       );
-    }
-  });
 
-  it("hasKey() returns false for empty key", () => {
-    const cs = new CipherState(TEST_EMPTY_KEY);
-    expect(cs.hasKey()).toStrictEqual(false);
-  });
+      // Decrypt with a new CipherState (to reset nonce)
+      const cs2 = new CipherState(TEST_KEY);
+      const decrypted = cs2.decrypt(TEST_AD, ciphertext);
+      expect(decrypted).toStrictEqual(TEST_PLAINTEXT);
+    });
 
-  it("hasKey() returns true for non-empty key", () => {
-    const cs = new CipherState(TEST_KEY);
-    expect(cs.hasKey()).toStrictEqual(true);
-  });
+    it("throws if state is wrong", () => {
+      const cs = new CipherState(TEST_KEY);
+      cs.encrypt(TEST_AD, TEST_PLAINTEXT);
 
-  it("encrypts and decrypts correctly with AAD", () => {
-    const cs = new CipherState(TEST_KEY);
+      // Use the same state so the nonce is wrong
+      expect(() =>
+        cs.decrypt(TEST_AD, cs.encrypt(TEST_AD, TEST_PLAINTEXT)),
+      ).toThrow();
+    });
 
-    const ciphertext = cs.encrypt(TEST_AD, TEST_PLAINTEXT);
-    expect(ciphertext.byteLength).toStrictEqual(
-      TEST_PLAINTEXT.byteLength + TAG_SIZE,
-    );
+    it("throws if ciphertext is tampered", () => {
+      const cs = new CipherState(TEST_KEY);
+      const ciphertext = cs.encrypt(TEST_AD, TEST_PLAINTEXT);
 
-    // Decrypt with a new CipherState (to reset nonce)
-    const cs2 = new CipherState(TEST_KEY);
-    const decrypted = cs2.decrypt(TEST_AD, ciphertext);
-    expect(decrypted).toStrictEqual(TEST_PLAINTEXT);
-  });
+      // Tamper with ciphertext
+      const tampered = Buffer.from(ciphertext);
+      tampered[0] ^= 0xff;
 
-  it("throws if state is wrong", () => {
-    const cs = new CipherState(TEST_KEY);
-    cs.encrypt(TEST_AD, TEST_PLAINTEXT);
+      const cs2 = new CipherState(TEST_KEY);
+      expect(() => cs2.decrypt(TEST_AD, tampered)).toThrow();
+    });
 
-    // Use the same state so the nonce is wrong
-    expect(() =>
-      cs.decrypt(TEST_AD, cs.encrypt(TEST_AD, TEST_PLAINTEXT)),
-    ).toThrow();
-  });
+    it("throws if tag is tampered", () => {
+      const cs = new CipherState(TEST_KEY);
+      const ciphertext = cs.encrypt(TEST_AD, TEST_PLAINTEXT);
 
-  it("throws if ciphertext is tampered", () => {
-    const cs = new CipherState(TEST_KEY);
-    const ciphertext = cs.encrypt(TEST_AD, TEST_PLAINTEXT);
+      // Tamper with tag (last TAG_SIZE bytes)
+      const tampered = Buffer.from(ciphertext);
+      tampered[tampered.length - 1] ^= 0xff;
 
-    // Tamper with ciphertext
-    const tampered = Buffer.from(ciphertext);
-    tampered[0] ^= 0xff;
-
-    const cs2 = new CipherState(TEST_KEY);
-    expect(() => cs2.decrypt(TEST_AD, tampered)).toThrow();
-  });
-
-  it("throws if tag is tampered", () => {
-    const cs = new CipherState(TEST_KEY);
-    const ciphertext = cs.encrypt(TEST_AD, TEST_PLAINTEXT);
-
-    // Tamper with tag (last TAG_SIZE bytes)
-    const tampered = Buffer.from(ciphertext);
-    tampered[tampered.length - 1] ^= 0xff;
-
-    const cs2 = new CipherState(TEST_KEY);
-    expect(() => cs2.decrypt(TEST_AD, tampered)).toThrow();
+      const cs2 = new CipherState(TEST_KEY);
+      expect(() => cs2.decrypt(TEST_AD, tampered)).toThrow();
+    });
   });
 });
