@@ -1,3 +1,4 @@
+import assert from "assert";
 import { KEY_SIZE, NV_SIZE } from "./constants";
 import { Key } from "./utils";
 
@@ -9,6 +10,15 @@ export class SPA {
   private nm: Buffer;
 
   constructor(e: Key, nv: Buffer, nm: Buffer) {
+    assert(
+      e.length == KEY_SIZE,
+      `e should be exactly ${KEY_SIZE} bytes long, got ${e.length} bytes long`,
+    );
+    assert(
+      nv.length == NV_SIZE,
+      `nv should be exactly ${NV_SIZE} bytes long, got ${nv.length} bytes long`,
+    );
+
     this.e = e;
     this.nv = nv;
     this.nm = nm;
@@ -19,7 +29,10 @@ export class SPA {
   }
 
   static unpack(data: Buffer): SPA {
-    if (data.length < SPA.MIN_SIZE) throw new Error("Data too small");
+    assert(
+      data.length >= SPA.MIN_SIZE,
+      `data should be at least ${SPA.MIN_SIZE} bytes long, got ${data.length} bytes long`,
+    );
 
     return new SPA(
       data.subarray(0, KEY_SIZE),
