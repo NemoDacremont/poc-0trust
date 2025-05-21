@@ -1,3 +1,4 @@
+import assert from "assert";
 import { HASH_NAME, PROLOGUE, PROTOCOL_NAME } from "./constants";
 import { KeyPair } from "./KeyPair";
 import { SPA } from "./SPA";
@@ -23,6 +24,8 @@ export class HandshakeInitiator {
   private s: KeyPair;
   private rs: Key;
   private psk: Key;
+  private e: KeyPair | null;
+  private re: Key | null;
 
   constructor({ s, rs, psk }: HandshakeInitiatorOptions) {
     this.ss = new SymmetricState(PROTOCOL_NAME, HASH_NAME);
@@ -30,21 +33,19 @@ export class HandshakeInitiator {
     this.s = s;
     this.rs = rs;
     this.psk = psk;
+    this.e = null;
+    this.re = null;
 
     this.ss.mixHash(Buffer.from(PROLOGUE, "utf-8"));
     this.ss.mixHash(this.rs);
   }
 
   writeMessageA(payload: Buffer): SPA {
-    const e = KeyPair.generate();
+    this.e = KeyPair.generate();
 
-    console.error(this.rs.length);
-    console.error(e.getPublic().length);
-    console.error(e.getPrivate().length);
-
-    this.ss.mixHash(e.getPublic());
-    this.ss.mixKey(e.getPublic());
-    this.ss.mixKey(dh(e.getPrivate(), this.rs));
+    this.ss.mixHash(this.e.getPublic());
+    this.ss.mixKey(this.e.getPublic());
+    this.ss.mixKey(dh(this.e.getPrivate(), this.rs));
 
     const v = Buffer.concat([getTimestampBuffer(), this.s.getPublic()]);
     const nv = this.ss.encryptAndHash(v);
@@ -54,8 +55,37 @@ export class HandshakeInitiator {
     this.ss.mixKeyAndHash(this.psk);
 
     const nm = this.ss.encryptAndHash(payload);
-    return new SPA(e.getPublic(), nv, nm);
+    return new SPA(this.e.getPublic(), nv, nm);
   }
 
-  readMessageB() {}
+  readMessageB(messageB: Buffer, getPSKByID: (rs: Key) => Key | null): Buffer {
+    assert(
+      this.ss !== null,
+      "readMessageA should have initialized the SymmetricState.",
+    );
+    assert(
+      this.e !== null,
+      "readMessageA should have initialized the ephemeral keys.",
+    );
+
+    const spa = SPA.unpack(messageB);
+
+    this.re = spa.getKey();
+
+    this.ss.mixHash(this.re);
+    this.ss.mixKey(this.re);
+
+    this.ss.mixKey(dh(this.e.getPrivate(), this.re));
+    this.ss.mixKey(dh(this.s.getPrivate(), this.re));
+
+    let decrypted;
+    try {
+      // valid 2...
+      decrypted = this.ss.decryptAndHash(spa.getCiphertext());
+    } catch (error) {
+      throw new Error("Decryption of server data failed.");
+    }
+
+    return decrypted;
+  }
 }
