@@ -85,12 +85,31 @@ describe("SymmetricState", () => {
   describe("encryptAndHash", () => {
     it("should returns plaintext if no key is set", () => {
       const ss = new SymmetricState(protocolName, hashName);
-      // Simulate no key: re-init cs with all-zero key
 
-      const oldH = Buffer.from((ss as any).h);
       const ct = ss.encryptAndHash(data);
-      expect(ct.equals(data)).toBe(true);
-      expect((ss as any).h.equals(oldH)).toBe(false);
+      expect(ct).toStrictEqual(data);
+    });
+
+    it("should returns ciphertext after a mixKey", () => {
+      const ss = new SymmetricState(protocolName, hashName);
+
+      ss.mixKey(randomKey2);
+
+      const ct = ss.encryptAndHash(data);
+      expect(ct).not.toEqual(data);
+    });
+
+    it("should returns ciphertext after many operations", () => {
+      const ss = new SymmetricState(protocolName, hashName);
+
+      ss.mixKey(randomKey2);
+      ss.mixHash(data2);
+      ss.mixKeyAndHash(randomKey3);
+      ss.mixHash(data);
+      ss.mixKey(randomKey2);
+
+      const ct = ss.encryptAndHash(data);
+      expect(ct).not.toEqual(data);
     });
 
     it("should update h", () => {
