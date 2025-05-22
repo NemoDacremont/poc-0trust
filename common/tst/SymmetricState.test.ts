@@ -131,27 +131,102 @@ describe("SymmetricState", () => {
   });
 
   describe("decryptAndHash", () => {
-    it("decryptAndHash returns ciphertext if no key is set", () => {
+    it("returns ciphertext if no key is set", () => {
       const ss = new SymmetricState(protocolName, hashName);
       const pt = ss.decryptAndHash(data2);
 
       expect(pt).toStrictEqual(data2);
     });
+
+    it("fails to decipher if incorrect payload and not in init state", () => {
+      const ss = new SymmetricState(protocolName, hashName);
+      ss.mixKey(randomKey2);
+
+      expect(() => ss.decryptAndHash(data2)).toThrow();
+    });
+
+    it("fails to decipher if incorrect payload and in complex state", () => {
+      const ss = new SymmetricState(protocolName, hashName);
+
+      ss.mixKey(randomKey2);
+      ss.mixKey(randomKey2);
+      ss.mixHash(data2);
+      ss.mixKeyAndHash(randomKey3);
+      ss.mixHash(data);
+
+      expect(() => ss.decryptAndHash(data2)).toThrow();
+    });
   });
 
   describe("encrypt and decrypt", () => {
-    it("encryptAndHash and decryptAndHash are inverses when key is set", () => {
+    it("encrypt and decrypt if using the same mixKey", () => {
       const ssA = new SymmetricState(protocolName, hashName);
+      const plaintext = Buffer.from("secret message");
 
       // Set a key
       ssA.mixKey(randomKey3);
-      const plaintext = Buffer.from("secret message");
       const ciphertext = ssA.encryptAndHash(plaintext);
       expect(ciphertext).not.toEqual(plaintext);
 
       // Decrypt with a new SymmetricState in same state
       const ssB = new SymmetricState(protocolName, hashName);
       ssB.mixKey(randomKey3);
+      const pt2 = ssB.decryptAndHash(ciphertext);
+
+      expect(pt2).toStrictEqual(plaintext);
+    });
+
+    it("encrypt and decrypt if using the same mixHash", () => {
+      const ssA = new SymmetricState(protocolName, hashName);
+
+      ssA.mixHash(randomKey2);
+      const ciphertext = ssA.encryptAndHash(data2);
+
+      const ssB = new SymmetricState(protocolName, hashName);
+      ssB.mixHash(randomKey2);
+      const pt2 = ssB.decryptAndHash(ciphertext);
+
+      // Since the key is not init using mixKey or mixKeyAndHash, the plaintext
+      // is not altered
+      expect(pt2).toStrictEqual(data2);
+      expect(pt2).toStrictEqual(ciphertext);
+    });
+
+    it("encrypt and decrypt if using the same mixKeyAndHash", () => {
+      const ssA = new SymmetricState(protocolName, hashName);
+      const plaintext = Buffer.from("secret message");
+
+      ssA.mixKeyAndHash(randomKey);
+      const ciphertext = ssA.encryptAndHash(plaintext);
+      expect(ciphertext).not.toEqual(plaintext);
+
+      const ssB = new SymmetricState(protocolName, hashName);
+      ssB.mixKeyAndHash(randomKey);
+      const pt2 = ssB.decryptAndHash(ciphertext);
+
+      expect(pt2).toStrictEqual(plaintext);
+    });
+
+    it("encrypt and decrypt if in the same complex state", () => {
+      const ssA = new SymmetricState(protocolName, hashName);
+      const plaintext = Buffer.from("secret message");
+
+      ssA.mixKey(randomKey2);
+      ssA.mixKeyAndHash(randomKey);
+      ssA.mixKey(randomKey2);
+      ssA.mixHash(data2);
+      ssA.mixKeyAndHash(randomKey3);
+      ssA.mixHash(data);
+      const ciphertext = ssA.encryptAndHash(plaintext);
+      expect(ciphertext).not.toEqual(plaintext);
+
+      const ssB = new SymmetricState(protocolName, hashName);
+      ssB.mixKey(randomKey2);
+      ssB.mixKeyAndHash(randomKey);
+      ssB.mixKey(randomKey2);
+      ssB.mixHash(data2);
+      ssB.mixKeyAndHash(randomKey3);
+      ssB.mixHash(data);
       const pt2 = ssB.decryptAndHash(ciphertext);
 
       expect(pt2).toStrictEqual(plaintext);
