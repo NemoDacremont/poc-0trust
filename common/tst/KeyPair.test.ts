@@ -8,6 +8,7 @@ describe("KeyPair", () => {
   const validPrivateKey = Buffer.alloc(KEY_SIZE, 0x42);
   const validPublicKey = Buffer.alloc(KEY_SIZE, 0x24);
 
+
   describe("getters", () => {
     it("returns the correct public and private keys", () => {
       const keyPair = new KeyPair(validPublicKey, validPrivateKey);

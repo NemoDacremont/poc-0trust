@@ -50,7 +50,9 @@ export class Server extends EventEmitter<ServerEvents> {
       send: (msg: string) => {
         const spa = hs.writeMessageB(Buffer.from(msg));
 
-        client.send(spa.pack(), rinfo.port, rinfo.address);
+        client.send(spa.pack(), rinfo.port, rinfo.address, (err) => {
+          client.close();
+        });
       },
     });
   }
