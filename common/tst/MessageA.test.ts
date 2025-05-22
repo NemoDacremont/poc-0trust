@@ -60,39 +60,78 @@ describe("IKpsk1 Message A", () => {
   test("Mutual authentification and message integrity", () => {
     const payload = Buffer.from("hello");
     const msg = aliceHS.writeMessageA(payload).pack();
-    const { timestamp, plaintext } = bobHS.readMessageA(msg, getPSKbyID);
+    const { plaintext } = bobHS.readMessageA(msg, getPSKbyID);
 
-    // expect(ok).toBe(true);
     expect(plaintext).toStrictEqual(payload);
   });
 
-  test("Sender authentication and KCI resistance", () => {
+  test("Sender authentication and KCI resistance (no PSK leak)", () => {
     // simulate compromise of Alice's static only (no PSK leak)
-    aliceHS = new HandshakeInitiator({
+    const oscarHS = new HandshakeInitiator({
       ...hsInitiatorOptions,
-      s: KeyPair.fromPrivate(randomBytes(KEY_SIZE)),
+      psk: randomBytes(KEY_SIZE),
     });
 
-    const msg = aliceHS.writeMessageA(Buffer.from("x")).pack();
+    const msg = oscarHS.writeMessageA(Buffer.from("x")).pack();
 
     // should NOT accept a message if only Alice's static key was compromised
     expect(() => {
       bobHS.readMessageA(msg, getPSKbyID);
-    }).toThrow(Error);
+    }).toThrow();
+  });
+
+  test("Sender authentification (PSK leak)", () => {
+    // simulate compromise of PSK
+    const oscarHS = new HandshakeInitiator({
+      ...hsInitiatorOptions,
+      s: KeyPair.fromPrivate(randomBytes(KEY_SIZE)),
+    });
+
+    const payload = Buffer.from("x");
+    const msg = oscarHS.writeMessageA(payload).pack();
+
+    // should NOT accept the message if only the PSK leaked
+    expect(() => {
+      bobHS.readMessageA(msg, getPSKbyID);
+    }).toThrow();
+  });
+
+  test("Sender authentification (PSK leak + Alice pub key)", () => {
+    // simulate compromise of PSK + Alice pub key
+    const oscarHS = new HandshakeInitiator({
+      ...hsInitiatorOptions,
+      s: new KeyPair(
+        Buffer.from(
+          "e51eaac8fe8aac9d95b3a7d215b330fb1b09bafc54625c22e76656190d98b246",
+          "hex",
+        ),
+        randomBytes(KEY_SIZE),
+      ),
+    });
+
+    const payload = Buffer.from("x");
+    const msg = oscarHS.writeMessageA(payload).pack();
+
+    // should NOT accept the message if the PSK leaked
+    // and Oscar include the Alice public key
+    expect(() => {
+      bobHS.readMessageA(msg, getPSKbyID);
+    }).toThrow();
   });
 
   test("Message secrecy (without keys)", () => {
     const payload = Buffer.from("hello");
     const msg = aliceHS.writeMessageA(payload).pack();
 
-    // No keys
-    bobHS = new HandshakeResponder({
+    // Attacker has no keys
+    const oscarHS = new HandshakeResponder({
       s: KeyPair.fromPrivate(randomBytes(KEY_SIZE)),
     });
     const getFakePSK = (rs: Key): Buffer => randomBytes(KEY_SIZE);
 
+    // should not read the message from Alice
     expect(() => {
-      bobHS.readMessageA(msg, getFakePSK);
+      oscarHS.readMessageA(msg, getFakePSK);
     }).toThrow();
   });
 
@@ -101,12 +140,12 @@ describe("IKpsk1 Message A", () => {
     const msg = aliceHS.writeMessageA(payload).pack();
 
     // PSK Key leakage
-    bobHS = new HandshakeResponder({
+    const oscarHS = new HandshakeResponder({
       s: KeyPair.fromPrivate(randomBytes(KEY_SIZE)),
     });
 
     expect(() => {
-      bobHS.readMessageA(msg, getPSKbyID);
+      oscarHS.readMessageA(msg, getPSKbyID);
     }).toThrow();
   });
 
@@ -115,11 +154,11 @@ describe("IKpsk1 Message A", () => {
     const msg = aliceHS.writeMessageA(payload).pack();
 
     // Bob's static keys leakage
-    // bobHS = new HandshakeResponder(hsResponderOptions);
+    const oscarHS = new HandshakeResponder(hsResponderOptions);
     const getFakePSK = (rs: Key): Buffer => randomBytes(KEY_SIZE);
 
     expect(() => {
-      bobHS.readMessageA(msg, getFakePSK);
+      oscarHS.readMessageA(msg, getFakePSK);
     }).toThrow();
   });
 });
