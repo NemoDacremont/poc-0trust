@@ -1,9 +1,11 @@
 import { randomBytes, randomInt } from "crypto";
 import { KEY_SIZE, NV_SIZE } from "../src/noise-spa/constants";
 import { SPA } from "../src/noise-spa/SPA";
-import { InvalidDataSizeError } from "../src/noise-spa/exceptions/InvalidDataSizeError";
-import { InvalidNVSizeError } from "../src/noise-spa/exceptions/InvalidNVSizeError";
-import { InvalidKeySizeError } from "../src/noise-spa/exceptions/InvalidKeySizeError";
+import {
+  InvalidDataSizeError,
+  InvalidNVSizeError,
+  InvalidKeySizeError,
+} from "../src/noise-spa/exceptions";
 
 describe("SPA unit tests", () => {
   const e = Buffer.from(
