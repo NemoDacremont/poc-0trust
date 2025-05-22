@@ -15,14 +15,15 @@ describe("SymmetricState", () => {
   const randomKey3 = Buffer.alloc(KEY_SIZE, 0xbeef);
   const data = Buffer.from("test-data");
   const data2 = Buffer.from("other-data");
+  const plaintext = Buffer.from("53cR37_M3s54G3");
 
   describe("mixHash", () => {
     it("should update h", () => {
       const ss = new SymmetricState(protocolName, hashName);
-      const oldH = Buffer.from(ss["h"]);
+      const oldH = ss["h"];
 
       ss.mixHash(data);
-      const newH = Buffer.from(ss["h"]);
+      const newH = ss["h"];
 
       expect(newH).not.toEqual(oldH);
     });
@@ -161,7 +162,6 @@ describe("SymmetricState", () => {
   describe("encrypt and decrypt", () => {
     it("encrypt and decrypt if using the same mixKey", () => {
       const ssA = new SymmetricState(protocolName, hashName);
-      const plaintext = Buffer.from("secret message");
 
       // Set a key
       ssA.mixKey(randomKey3);
@@ -180,7 +180,7 @@ describe("SymmetricState", () => {
       const ssA = new SymmetricState(protocolName, hashName);
 
       ssA.mixHash(randomKey2);
-      const ciphertext = ssA.encryptAndHash(data2);
+      const ciphertext = ssA.encryptAndHash(plaintext);
 
       const ssB = new SymmetricState(protocolName, hashName);
       ssB.mixHash(randomKey2);
@@ -188,13 +188,12 @@ describe("SymmetricState", () => {
 
       // Since the key is not init using mixKey or mixKeyAndHash, the plaintext
       // is not altered
-      expect(pt2).toStrictEqual(data2);
+      expect(pt2).toStrictEqual(plaintext);
       expect(pt2).toStrictEqual(ciphertext);
     });
 
     it("encrypt and decrypt if using the same mixKeyAndHash", () => {
       const ssA = new SymmetricState(protocolName, hashName);
-      const plaintext = Buffer.from("secret message");
 
       ssA.mixKeyAndHash(randomKey);
       const ciphertext = ssA.encryptAndHash(plaintext);
@@ -209,7 +208,6 @@ describe("SymmetricState", () => {
 
     it("encrypt and decrypt if in the same complex state", () => {
       const ssA = new SymmetricState(protocolName, hashName);
-      const plaintext = Buffer.from("secret message");
 
       ssA.mixKey(randomKey2);
       ssA.mixKeyAndHash(randomKey);
