@@ -27,7 +27,9 @@ describe("KeyPair", () => {
 
     it("generates a correct KeyPair", () => {
       const keyPair = KeyPair.generate();
-      const expectedPublicKey = x25519.getPublicKey(keyPair.getPrivate());
+      const expectedPublicKey = Buffer.from(
+        x25519.getPublicKey(keyPair.getPrivate()),
+      );
 
       expect(keyPair.getPublic()).toStrictEqual(expectedPublicKey);
     });
@@ -43,7 +45,9 @@ describe("KeyPair", () => {
 
     it("creates a the right KeyPair from a valid private key", () => {
       const keyPair = KeyPair.fromPrivate(validPrivateKey);
-      const expectedPublicKey = x25519.getPublicKey(validPrivateKey);
+      const expectedPublicKey = Buffer.from(
+        x25519.getPublicKey(validPrivateKey),
+      );
 
       expect(keyPair.getPrivate()).toStrictEqual(validPrivateKey);
       expect(keyPair.getPublic()).toStrictEqual(expectedPublicKey);
@@ -66,7 +70,7 @@ describe("KeyPair", () => {
 
   describe("constructor", () => {
     it("constructs with valid keys", () => {
-      expect(new KeyPair(validPublicKey, validPrivateKey)).not.toThrow();
+      expect(() => new KeyPair(validPublicKey, validPrivateKey)).not.toThrow();
     });
 
     it("creates a KeyPair with valid public and private keys", () => {
