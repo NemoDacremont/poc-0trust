@@ -49,17 +49,17 @@ export class CipherState {
   decrypt(ad: Buffer, ciphertext: Buffer): Buffer {
     const nonce = Buffer.alloc(12);
     nonce.writeBigUInt64LE(BigInt(this.nonce), 4);
-    const cipher = CipherState.createDecipher(this.key, nonce);
+    const decipher = CipherState.createDecipher(this.key, nonce);
 
     const realCiphertext = ciphertext.subarray(0, -TAG_SIZE);
     const tag = ciphertext.subarray(-TAG_SIZE);
 
-    cipher.setAuthTag(tag);
-    cipher.setAAD(ad, { plaintextLength: realCiphertext.byteLength });
+    decipher.setAuthTag(tag);
+    decipher.setAAD(ad, { plaintextLength: realCiphertext.byteLength });
 
     const plaintext = Buffer.concat([
-      cipher.update(realCiphertext),
-      cipher.final(),
+      decipher.update(realCiphertext),
+      decipher.final(),
     ]);
 
     this.nonce++;
